@@ -1,0 +1,66 @@
+---
+- name: Deploy website to Rocky Linux web server
+  hosts: prod_web_server
+  become: true
+  remote_user: root
+  vars:
+    website_zip: "/home/student/Downloads/explore_california.zip"
+    target_directory: "/var/www/html"  # Default Apache web directory
+
+  tasks:
+    - name: Install web server
+      ansible.builtin.yum:
+        name: httpd
+        state: present
+
+    - name: Copy website zip file to the target server
+      ansible.builtin.copy:
+        src: "{{ website_zip }}"
+        dest: "/tmp/explore_california.zip"
+        mode: '0644'
+
+    - name: Install unzip if not present
+      ansible.builtin.yum:
+        name: unzip
+        state: present
+
+    - name: Unzip website to the target directory
+      ansible.builtin.unarchive:
+        src: "/tmp/explore_california.zip"
+        dest: "{{ target_directory }}"
+        remote_src: yes
+        owner: apache
+        group: apache
+
+    - name: Ensure proper permissions for web files
+      ansible.builtin.file:
+        path: "{{ target_directory }}"
+        state: directory
+        owner: apache
+        group: apache
+        mode: '0755'
+        recurse: yes
+
+    - name: Restart the Apache web server to apply changes
+      ansible.builtin.systemd:
+        name: httpd
+        state: restarted
+
+    - name: Ensure firewalld is installed
+      ansible.builtin.yum:
+        name: firewalld
+        state: present
+
+    - name: Ensure firewalld is started and enabled
+      ansible.builtin.systemd:
+        name: firewalld
+        state: started
+        enabled: yes
+
+    - name: Allow HTTP service in firewalld
+      ansible.posix.firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+        immediate: yes
+

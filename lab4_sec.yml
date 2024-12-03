@@ -1,0 +1,38 @@
+---
+- name: Secure Load Balancer Configuration for Rocky Linux 8
+  hosts: 192.168.1.104
+  become: yes
+
+  vars:
+    allowed_ips: 
+      - "192.168.1.0/24"  # Replace with your local network IP range
+      - "192.168.2.0/24"     # Example of another local IP range
+
+  tasks:
+    - name: Ensure iptables-services is installed
+      yum:
+        name: iptables-services
+        state: present
+
+    - name: Allow local IP addresses only for management access
+      iptables:
+        chain: INPUT
+        source: "{{ item }}"
+        protocol: tcp
+        destination_port: 22
+        jump: ACCEPT
+      loop: "{{ allowed_ips }}"
+      notify: Save iptables rules
+
+    - name: Add default DROP rule for SSH
+      iptables:
+        chain: INPUT
+        protocol: tcp
+        destination_port: 22
+        jump: DROP
+      notify: Save iptables rules
+
+  handlers:
+    - name: Save iptables rules
+      command: /usr/sbin/service iptables save
+

@@ -1,0 +1,36 @@
+---
+- name: Create multiple user accounts and add them to a local Git repository
+  hosts: dev_web_server
+  tasks:
+    - name: Install git
+      dnf:
+        name: git
+        state: latest
+
+    - name: Create user accounts
+      user:
+        name: "{{ item.name }}"
+        state: present
+        shell: /bin/bash
+      with_items:
+        - { name: 'wyatt' }
+        - { name: 'caleb' }
+        - { name: 'lewis' }
+        - { name: 'trevor' }
+
+    - name: Configure Git user for each account
+      become: yes
+      become_user: "{{ item.name }}"
+      shell: |
+        git config --global user.name "{{ item.git_name }}"
+        git config --global user.email "{{ item.git_email }}"
+      with_items:
+        - { name: 'wyatt', git_name: 'Wyatt', git_email: 'wyatt@group6.com' }
+        - { name: 'caleb', git_name: 'Caleb', git_email: 'caleb@group6.com' }
+        - { name: 'trevor', git_name: 'Trevor', git_email: 'trevor@group6.com' }
+        - { name: 'lewis', git_name: 'Lewis', git_email: 'lewis@group6.com' }
+
+    - name: Initialize Git repository
+      command: git init
+      args:
+        chdir: /var/www/html

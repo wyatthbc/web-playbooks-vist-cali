@@ -1,0 +1,43 @@
+---
+- name: Create multiple user accounts and add them to a local Git repository
+  hosts: dev_web_server
+  become: true
+  remote_user: root
+  vars:
+    usernames:
+      - lewis
+      - wyatt
+      - caleb
+      - trevor
+    repo_path: "/var/www/html"
+
+  tasks:
+    - name: Create user accounts
+      user:
+        name: "{{ item }}"
+        state: present
+        create_home: yes
+        password: "{{ 'password' | password_hash('sha512') }}"
+      loop: "{{ usernames }}"
+
+    - name: Initialize Git repository for each user
+      block:
+        - name: initialize git
+          command: git init
+          args:
+            chdir: "{{ repo_path }}"
+          become_user: "{{ item }}"
+
+        - name: Configure Git user.name for each user
+          command: git config user.name "{{ item }}"
+          args:
+            chdir: "{{ repo_path }}"
+          become_user: "{{ item }}"
+
+        - name: Configure Git user.email for each user
+          command: git config user.email "{{ item }}@group6.com"
+          args:
+            chdir: "{{ repo_path }}"
+          become_user: "{{ item }}"
+      loop: "{{ usernames }}"
+

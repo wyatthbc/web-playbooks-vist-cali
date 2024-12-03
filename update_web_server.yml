@@ -1,0 +1,65 @@
+# update_web_server.yml
+- name: Comment out the server from haproxy-sec-1 configuration
+  replace:
+    path: "/etc/haproxy/haproxy.cfg"
+    regexp: "^\\s*server {{ web_server.name }} {{ web_server.ip }}:80 check"
+    replace: "# server {{ web_server.name }} {{ web_server.ip }}:80 check"
+  delegate_to: "{{ haproxy_sec_1 }}"
+ 
+- name: Reload haproxy-sec-1
+  command: systemctl reload haproxy
+  delegate_to: "{{ haproxy_sec_1 }}"
+ 
+- name: Comment out the server from haproxy-sec-2 configuration
+  replace:
+    path: "/etc/haproxy/haproxy.cfg"
+    regexp: "^\\s*server {{ web_server.name }} {{ web_server.ip }}:80 check"
+    replace: "# server {{ web_server.name }} {{ web_server.ip }}:80 check"
+  delegate_to: "{{ haproxy_sec_2 }}"
+ 
+- name: Reload haproxy-sec-2
+  command: systemctl reload haproxy
+  delegate_to: "{{ haproxy_sec_2 }}"
+
+- name: Synchronize files from source to destination using rsync
+  ansible.builtin.command: >
+    rsync -avz {{ web_files_src }} root@{{ web_server.ip }}:{{ web_files_dest }}
+  delegate_to: "{{ web_rel }}"
+  become: yes
+  become_user: root
+  environment:
+    RSYNC_RSH: "ssh -o StrictHostKeyChecking=no"
+  register: rsync_result
+
+- name: Display rsync result
+  debug:
+    var: rsync_result.stdout
+
+- name: Restart Apache service on the web server
+  service:
+    name: httpd
+    state: restarted
+  delegate_to: "{{ web_server.ip }}"
+ 
+- name: Uncomment the server in haproxy-sec-1 configuration
+  replace:
+    path: "/etc/haproxy/haproxy.cfg"
+    regexp: "^#\\s*server {{ web_server.name }} {{ web_server.ip }}:80 check"
+    replace: "    server {{ web_server.name }} {{ web_server.ip }}:80 check"
+  delegate_to: "{{ haproxy_sec_1 }}"
+ 
+- name: Reload haproxy-sec-1
+  command: systemctl reload haproxy
+  delegate_to: "{{ haproxy_sec_1 }}"
+ 
+- name: Uncomment the server in haproxy-sec-2 configuration
+  replace:
+    path: "/etc/haproxy/haproxy.cfg"
+    regexp: "^#\\s*server {{ web_server.name }} {{ web_server.ip }}:80 check"
+    replace: "    server {{ web_server.name }} {{ web_server.ip }}:80 check"
+  delegate_to: "{{ haproxy_sec_2 }}"
+ 
+- name: Reload haproxy-sec-2
+  command: systemctl reload haproxy
+  delegate_to: "{{ haproxy_sec_2 }}"
+ 

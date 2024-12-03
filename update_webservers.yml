@@ -1,0 +1,44 @@
+---
+- name: Blue-Green Deployment Update for Web Servers
+  hosts: localhost
+  gather_facts: no
+  vars:
+    haproxy_sec_1: 192.168.2.104
+    haproxy_sec_2: 192.168.2.105
+    web_servers:
+      - { name: "web1", ip: "192.168.2.101" }
+      - { name: "web2", ip: "192.168.2.102" }
+      - { name: "web3", ip: "192.168.2.103" }
+    web_rel: 192.168.1.103
+    web_files_src: "/var/www/html/"
+    web_files_dest: "/var/www/html/"
+    #web_files_src: "/var/www/html1/"
+    #web_files_dest: "/var/www/html1/"
+ 
+  tasks:
+    #- name: Check if all servers are reachable
+    #  ping:
+    #    delegate_to: "{{ item }}"
+    #  with_items:
+    #    - "{{ haproxy_sec_1 }}"
+    #    - "{{ haproxy_sec_2 }}"
+    #    - "{{ web_servers | map(attribute='ip') | list }}"
+    #    - "{{ web_rel }}"
+    #  ignore_errors: yes
+    #  register: ping_result
+ 
+    #- name: Fail if any servers are unreachable
+    #  fail:
+    #    msg: "Some servers are unreachable."
+    #  when: ping_result.failed
+
+    - name: Install rsync if not present
+      ansible.builtin.yum:
+        name: rsync
+        state: present
+ 
+    - name: Update each web server in sequence
+      include_tasks: update_web_server.yml
+      loop: "{{ web_servers }}"
+      loop_control:
+        loop_var: web_server

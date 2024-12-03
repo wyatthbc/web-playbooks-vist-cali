@@ -1,0 +1,14 @@
+- name: Install node-exporter
+  hosts: prod_web_server
+  roles:
+    - prometheus.prometheus.node_exporter
+
+  tasks:
+    - name: Open firewall port
+      firewalld:
+        port: 9100/tcp
+        permanent: yes
+        state: enabled
+
+    - name: Reload firewalld
+      command: firewalld-cmd --reload
