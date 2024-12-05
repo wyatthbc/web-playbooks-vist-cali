@@ -28,6 +28,16 @@
         mode: '0755'
         recurse: yes
 
+    - name: Allow access to the root directory
+      lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^(\s*Deny\s+from\s+all)'
+        line: '    Allow from all'
+        state: present
+        backup: yes
+      notify:
+        - Restart Apache
+
     - name: Restart the Apache web server to apply changes
       ansible.builtin.systemd:
         name: httpd
