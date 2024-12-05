@@ -13,24 +13,23 @@
         name: httpd
         state: present
 
-    # - name: Copy website zip file to the target server
-    #   ansible.builtin.copy:
-    #     src: "{{ website_zip }}"
-    #     dest: "/tmp/explore_california.zip"
-    #     mode: '0644'
+    - name: Copy website zip file to the target server
+      ansible.builtin.copy:
+        src: "{{ website_zip }}"
+        dest: "/tmp/explore_california.zip"
+        mode: '0644'
 
-    # - name: Install unzip if not present
-    #   ansible.builtin.yum:
-    #     name: unzip
-    #     state: present
+    - name: Install unzip if not present
+      ansible.builtin.yum:
+        name: unzip
+        state: present
 
-    # - name: Unzip website to the target directory
-    #   ansible.builtin.unarchive:
-    #     src: "/tmp/explore_california.zip"
-    #     dest: "{{ target_directory }}"
-    #     remote_src: yes
-    #     owner: apache
-    #     group: apache
+    - name: Unzip website to the target directory
+      ansible.builtin.unarchive:
+        src: "/tmp/explore_california.zip"
+        dest: "{{ target_directory }}"
+        owner: apache
+        group: apache
 
     - name: Ensure proper permissions for web files
       ansible.builtin.file:
@@ -41,10 +40,10 @@
         mode: '0755'
         recurse: yes
 
-    # - name: Restart the Apache web server to apply changes
-    #   ansible.builtin.systemd:
-    #     name: httpd
-    #     state: restarted
+    - name: Restart the Apache web server to apply changes
+      ansible.builtin.systemd:
+        name: httpd
+        state: restarted
 
     # - name: Ensure firewalld is installed
     #   ansible.builtin.yum:
