@@ -1,10 +1,10 @@
 ---
 - name: Deploy website to Rocky Linux web server
-  hosts: prod_web_server
+  hosts: localhost
   become: true
   remote_user: root
   vars:
-    website_zip: "/home/student/Downloads/explore_california.zip"
+    website_zip: "/home/ec2-user/explore_california.zip"
     target_directory: "/var/www/html"  # Default Apache web directory
 
   tasks:
